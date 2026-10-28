@@ -598,13 +598,16 @@ def load_genome(src):
 
 def sidebar_settings(src, contigs):
     names = contigs["contig"].unique().tolist()
-    default = contigs.loc[contigs["organelle"], "contig"].unique().tolist()
+    organelles = contigs.loc[contigs["organelle"], "contig"].unique().tolist()
+    default = organelles if len(organelles) < len(names) else []   # never exclude everything
     horizontal = supported(st.radio, horizontal=True)
     with st.sidebar:
         excluded = st.multiselect(
             "Exclude contigs", names, default=default, key="exclude_" + src["sha256"][:12],
-            help="Organelle-like sequences (Mt/Pt, mitochondrion, chloroplast/plastid) "
-                 "start excluded for a nuclear-only analysis.")
+            help="Contigs listed here are left out. Organelle-like sequences (Mt/Pt, "
+                 "mitochondrion, chloroplast/plastid) start here for a nuclear-only analysis.",
+            **supported(st.multiselect, select_all=False))
+        st.caption(f"{len(names) - len(excluded)} of {len(names)} contigs included")
         st.header("Selective bases")
         e_len = st.radio("EcoRI end", [1, 2, 3], index=1, key="e_len", **horizontal)
         h_len = st.radio("HpaII/MspI end", [1, 2, 3], index=1, key="h_len", **horizontal)
@@ -628,9 +631,6 @@ def sidebar_settings(src, contigs):
 
 def genome_warnings(contigs):
     total = int(contigs["length_bp"].sum())
-    if total == 0:
-        st.error("The included sequences are empty.")
-        return
     n_pct = 100 * contigs["n"].sum() / total
     other_pct = 100 * (total - contigs["acgt"].sum() - contigs["n"].sum()) / total
     if other_pct > 10:
@@ -823,6 +823,14 @@ def main():
 
     included = contigs.loc[~contigs["contig"].isin(settings["excluded"]), "contig"]
     included = included.unique().tolist()
+    if not included:
+        st.error("Every contig is excluded. Remove at least one from **Exclude contigs** "
+                 "in the sidebar.")
+        st.stop()
+    if contigs.loc[contigs["contig"].isin(included), "length_bp"].sum() == 0:
+        st.error("The FASTA headers were read but no sequence follows them. Each `>` header "
+                 "line needs its sequence on the next line(s).")
+        st.stop()
     keep = (frags_all["bp"].between(settings["min_bp"], settings["max_bp"])
             & frags_all["contig"].isin(included))
     frags = frags_all.loc[keep].reset_index(drop=True)
