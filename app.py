@@ -687,7 +687,7 @@ def render_gel(view, ranking, settings):
     mode = st.radio("Lanes", ["Top ranked", "Choose pairs"], key="lane_mode",
                     **supported(st.radio, horizontal=True))
     if mode == "Top ranked":
-        most = min(16, len(ranking))
+        most = min(32, len(ranking))
         count = st.slider("Number of lanes", 1, most, min(8, most), key="lane_n")
         lanes = top_pairs(ranking, count)
     else:
