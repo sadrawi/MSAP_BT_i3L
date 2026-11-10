@@ -609,8 +609,8 @@ def sidebar_settings(src, contigs):
             **supported(st.multiselect, select_all=False))
         st.caption(f"{len(names) - len(excluded)} of {len(names)} contigs included")
         st.header("Selective bases")
-        e_len = st.radio("EcoRI end", [1, 2, 3], index=1, key="e_len", **horizontal)
-        h_len = st.radio("HpaII/MspI end", [1, 2, 3], index=1, key="h_len", **horizontal)
+        e_len = st.radio("EcoRI end", [0,1, 2, 3], index=1, key="e_len", **horizontal)
+        h_len = st.radio("HpaII/MspI end", [0,1, 2, 3], index=1, key="h_len", **horizontal)
         st.header("Fragment window")
         min_bp = st.number_input("Min bp", min_value=20, max_value=SIZE_CAP, value=100,
                                  step=10, key="min_bp")
